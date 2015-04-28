@@ -4,6 +4,7 @@
     {
         Undefined,
         Rgbw,
+        Rgb,
         White
     }
 }

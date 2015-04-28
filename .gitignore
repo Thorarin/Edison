@@ -2,3 +2,4 @@ packages
 *.suo
 obj
 [Bb]in
+*.user

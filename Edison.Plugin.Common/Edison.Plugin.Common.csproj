@@ -38,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Lighting\Brightness.cs" />
+    <Compile Include="Lighting\BrightnessType.cs" />
     <Compile Include="Lighting\Color.cs" />
     <Compile Include="Lighting\ILightingController.cs" />
     <Compile Include="Lighting\ILightingZone.cs" />

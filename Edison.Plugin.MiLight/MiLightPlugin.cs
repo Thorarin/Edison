@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Edison.Plugin.Common.Lighting;
 using Edison.Plugin.Common.Net;
 using MoreLinq;
 
@@ -13,14 +14,10 @@ namespace Edison.Plugin.MiLight
     public class MiLightPlugin
     {
         private readonly INetworkService _networkService;
-        private readonly IUdpClient _udpClient;
 
         public MiLightPlugin(INetworkService networkService)
         {
             _networkService = networkService;
-
-            //_udpClient = udpClient;
-            //udpClient.ConnectAsync("192.168.0.255", 48899);
         }
 
         public async Task<IEnumerable<WifiBridgeInfo>> DiscoverAsync(TimeSpan timeout)
@@ -33,14 +30,17 @@ namespace Edison.Plugin.MiLight
 
             // ReSharper disable MethodSupportsCancellation
             int loops = (int)timeout.TotalMilliseconds / 50;
+            byte[] discoveryPacket = Encoding.UTF8.GetBytes("Link_Wi-Fi");
             IPEndpoint endpoint = new IPEndpoint(IPAddress.Broadcast, 48899);
             for (int i = 0; i < loops; i++)
             {
-                await client.SendAsync(new byte[] { 0x4C, 0x69, 0x6E, 0x6B, 0x5F, 0x57, 0x69, 0x2D, 0x46, 0x69 }, endpoint);
+                await client.SendAsync(discoveryPacket, endpoint);
                 await Task.Delay(50);
             }
 
+            await Task.Delay(200);
             // ReSharper restore MethodSupportsCancellation
+
             tokenSource.Cancel();
             client.Dispose();
 
@@ -80,26 +80,14 @@ namespace Edison.Plugin.MiLight
             return results;
         }
 
-        public async Task TurnOffAsync()
+        public async Task<ILightingController> GetControllerAsync(WifiBridgeInfo bridgeInfo)
         {
-            await _udpClient.SendAsync(new byte[] { 0x41, 0x00 });
+            var controller = new Controller(_networkService);
+            controller.RemoteEndpoint = new IPEndpoint(bridgeInfo.Address, 8899);
+
+            await controller.InitializeAsync();
+
+            return controller;
         }
-
-        public async Task TurnOnAsync()
-        {
-            await _udpClient.SendAsync(new byte[] { 0x42, 0x00 });
-        }
-
-        public async Task SetBrightness(int brightness)
-        {
-            await _udpClient.SendAsync(new byte[] { 0x4e, (byte)brightness });
-        }
-
-        public async Task SetColor(int color)
-        {
-            await _udpClient.SendAsync(new byte[] { 0x40, (byte)color });
-        }
-
-
     }
 }
